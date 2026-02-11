@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiplication Practice</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #4b5563;
+      --accent: #2563eb;
+      --correct: #15803d;
+      --wrong: #b91c1c;
+      --border: #d1d5db;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: min(640px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(1.4rem, 2.8vw, 1.9rem);
+      text-align: center;
+    }
+
+    .setup,
+    .quiz {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      font-size: 1rem;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    input:focus,
+    select:focus,
+    button:focus {
+      outline: 2px solid #93c5fd;
+      outline-offset: 2px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 600;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .question-feedback-row {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .question {
+      flex: 1;
+      font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+      font-weight: 700;
+      text-align: left;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .feedback {
+      flex: 1;
+      min-height: 64px;
+      font-size: clamp(1.1rem, 3.2vw, 1.4rem);
+      font-weight: 800;
+      text-align: center;
+      padding: 14px;
+      border-radius: 10px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feedback.correct {
+      color: var(--correct);
+      background: #dcfce7;
+      border: 1px solid #86efac;
+    }
+
+    .feedback.wrong {
+      color: var(--wrong);
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .done {
+      text-align: center;
+      font-size: clamp(1.15rem, 3vw, 1.5rem);
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding: 16px;
+      }
+
+      select,
+      input,
+      button {
+        padding: 11px;
+      }
+
+      .question-feedback-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Multiplication Practice</h1>
+
+    <section id="setup" class="setup">
+      <div class="field">
+        <label for="baseNumber">Select a number (1-30)</label>
+        <select id="baseNumber" aria-label="Select number"></select>
+      </div>
+
+      <div class="field">
+        <label for="rangeSelect">Select multiplier range</label>
+        <select id="rangeSelect" aria-label="Select range">
+          <option value="2-10">2-10</option>
+          <option value="11-20">11-20</option>
+          <option value="2-20">2-20</option>
+        </select>
+      </div>
+
+      <button id="startBtn" type="button">Start Quiz</button>
+    </section>
+
+    <section id="quiz" class="quiz hidden" aria-live="polite">
+      <div class="status">
+        <span id="progress">Question: 1 / 100</span>
+        <span id="score">Score: 0</span>
+      </div>
+
+      <div class="question-feedback-row">
+        <div id="question" class="question"></div>
+        <div id="feedback" class="feedback"></div>
+      </div>
+
+      <div class="field">
+        <label for="answerInput">Your answer</label>
+        <input id="answerInput" type="number" inputmode="numeric" autocomplete="off" />
+      </div>
+
+      <button id="submitBtn" type="button">Submit</button>
+
+      <div id="done" class="done hidden"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const QUESTION_COUNT = 100;
+
+      const setupEl = document.getElementById("setup");
+      const quizEl = document.getElementById("quiz");
+      const baseNumberEl = document.getElementById("baseNumber");
+      const rangeSelectEl = document.getElementById("rangeSelect");
+      const startBtn = document.getElementById("startBtn");
+      const questionEl = document.getElementById("question");
+      const answerInputEl = document.getElementById("answerInput");
+      const submitBtn = document.getElementById("submitBtn");
+      const feedbackEl = document.getElementById("feedback");
+      const progressEl = document.getElementById("progress");
+      const scoreEl = document.getElementById("score");
+      const doneEl = document.getElementById("done");
+
+      let questions = [];
+      let currentIndex = 0;
+      let score = 0;
+      let waiting = false;
+
+      function buildBaseNumberOptions() {
+        for (let i = 1; i <= 30; i += 1) {
+          const option = document.createElement("option");
+          option.value = String(i);
+          option.textContent = String(i);
+          baseNumberEl.appendChild(option);
+        }
+      }
+
+      function parseRange(rangeText) {
+        const [start, end] = rangeText.split("-").map(Number);
+        return { start, end };
+      }
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function generateQuestions(base, rangeText) {
+        const { start, end } = parseRange(rangeText);
+        const result = [];
+
+        for (let i = 0; i < QUESTION_COUNT; i += 1) {
+          const multiplier = randomInt(start, end);
+          result.push({
+            base,
+            multiplier,
+            answer: base * multiplier
+          });
+        }
+
+        return result;
+      }
+
+      function renderQuestion() {
+        const q = questions[currentIndex];
+        progressEl.textContent = `Question: ${currentIndex + 1} / ${QUESTION_COUNT}`;
+        scoreEl.textContent = `Score: ${score}`;
+        questionEl.textContent = `${q.base} x ${q.multiplier} = ?`;
+        answerInputEl.value = "";
+        feedbackEl.className = "feedback";
+        feedbackEl.textContent = "";
+        answerInputEl.focus();
+      }
+
+      function showFeedback(message, isCorrect) {
+        feedbackEl.className = "feedback " + (isCorrect ? "correct" : "wrong");
+        feedbackEl.textContent = message;
+      }
+
+      function finishQuiz() {
+        questionEl.textContent = "Quiz complete!";
+        progressEl.textContent = `Question: ${QUESTION_COUNT} / ${QUESTION_COUNT}`;
+        scoreEl.textContent = `Score: ${score}`;
+        doneEl.classList.remove("hidden");
+        doneEl.textContent = `Final score: ${score} / ${QUESTION_COUNT}`;
+        submitBtn.disabled = true;
+        answerInputEl.disabled = true;
+      }
+
+      function handleSubmit() {
+        if (waiting || currentIndex >= questions.length) {
+          return;
+        }
+
+        const userValue = Number(answerInputEl.value);
+        if (answerInputEl.value.trim() === "") {
+          showFeedback("Please enter an answer.", false);
+          return;
+        }
+
+        const q = questions[currentIndex];
+        const isCorrect = userValue === q.answer;
+
+        if (isCorrect) {
+          score += 1;
+          showFeedback("Correct", true);
+        } else {
+          showFeedback(
+            `${q.base} \u00D7 ${q.multiplier} = ${q.answer}`,
+            false
+          );
+        }
+
+        waiting = true;
+        submitBtn.disabled = true;
+        answerInputEl.disabled = true;
+
+        const nextDelayMs = isCorrect ? 800 : 1500;
+
+        setTimeout(() => {
+          currentIndex += 1;
+          waiting = false;
+          submitBtn.disabled = false;
+          answerInputEl.disabled = false;
+
+          if (currentIndex >= questions.length) {
+            finishQuiz();
+            return;
+          }
+
+          renderQuestion();
+        }, nextDelayMs);
+      }
+
+      function startQuiz() {
+        const base = Number(baseNumberEl.value);
+        const range = rangeSelectEl.value;
+
+        questions = generateQuestions(base, range);
+        currentIndex = 0;
+        score = 0;
+        waiting = false;
+
+        setupEl.classList.add("hidden");
+        quizEl.classList.remove("hidden");
+        doneEl.classList.add("hidden");
+        feedbackEl.className = "feedback";
+        feedbackEl.textContent = "";
+        submitBtn.disabled = false;
+        answerInputEl.disabled = false;
+
+        renderQuestion();
+      }
+
+      startBtn.addEventListener("click", startQuiz);
+      submitBtn.addEventListener("click", handleSubmit);
+      answerInputEl.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          handleSubmit();
+        }
+      });
+
+      buildBaseNumberOptions();
+    })();
+  </script>
+</body>
+</html>
