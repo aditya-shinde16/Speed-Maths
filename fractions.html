@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraction <-> Percentage Practice</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #0ea5e9;
+      --border: #dbe3ee;
+      --ok: #15803d;
+      --bad: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, #eef6ff 0%, #f8fafc 55%, #f2f6fb 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 1.6rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      margin: 0 0 16px;
+    }
+
+    .setup-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    .fixed-count {
+      font-size: 0.95rem;
+      color: var(--muted);
+      align-self: center;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #334155;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin: 14px 0 16px;
+      font-weight: 600;
+    }
+
+    .qa-row {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 14px;
+      min-height: 180px;
+    }
+
+    .question-text {
+      font-size: 1.2rem;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    .input-wrap {
+      max-width: 260px;
+    }
+
+    .fraction-group {
+      width: min(220px, 100%);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .percent-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 220px;
+    }
+
+    .percent-sign {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .fraction-input {
+      width: 100%;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .fraction-bar {
+      height: 3px;
+      background: #0f172a;
+      margin: 7px 0;
+      width: 100%;
+    }
+
+    .fraction-display {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .fraction-display .bar {
+      width: 50px;
+      height: 2px;
+      background: #0f172a;
+      margin: 3px 0;
+    }
+
+    .feedback-title {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .feedback-message {
+      font-size: clamp(1.15rem, 2.7vw, 1.35rem);
+      line-height: 1.35;
+      font-weight: 600;
+      min-height: 50px;
+    }
+
+    .feedback-ok {
+      color: var(--ok);
+      font-weight: 800;
+    }
+
+    .feedback-bad {
+      color: var(--bad);
+      font-weight: 700;
+    }
+
+    .actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .result-box {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    @media (max-width: 800px) {
+      .setup-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .qa-row {
+        grid-template-columns: 1fr;
+      }
+
+      .input-wrap,
+      .percent-input-row {
+        max-width: 100%;
+      }
+
+      .fraction-input,
+      .fraction-bar {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Fraction <-> Percentage Practice</h1>
+    <p class="muted">Practice conversion both ways with unit fractions (1/6 to 1/20) or general fractions (denominator 2 to 20).</p>
+
+    <section id="setupPanel">
+      <div class="setup-grid">
+        <div>
+          <label for="mainMode">Main Mode</label>
+          <select id="mainMode">
+            <option value="fractionToPercentage">Fraction to Percentage</option>
+            <option value="percentageToFraction">Percentage to Fraction</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="subMode">Sub-Mode</label>
+          <select id="subMode">
+            <option value="unit">Unit Fractions Mode</option>
+            <option value="general">General Fractions Mode</option>
+          </select>
+        </div>
+
+        <div class="fixed-count">
+          Number of questions: <strong>100</strong>
+        </div>
+
+        <div>
+          <button id="startBtn">Start Practice</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="quizPanel" class="hidden">
+      <div class="status">
+        <div id="progressText">Question 1 / 100</div>
+        <div id="scoreText">Score: 0</div>
+      </div>
+
+      <div class="qa-row">
+        <div class="panel">
+          <p id="questionText" class="question-text"></p>
+          <div id="answerArea" class="input-wrap"></div>
+        </div>
+
+        <div class="panel">
+          <h2 class="feedback-title">Feedback</h2>
+          <div id="feedbackMessage" class="feedback-message"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="submitBtn">Submit</button>
+        <button id="restartBtn" class="secondary hidden">Start New Set</button>
+      </div>
+
+      <div id="resultBox" class="result-box hidden"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const QUESTION_COUNT = 100;
+      const mainModeEl = document.getElementById("mainMode");
+      const subModeEl = document.getElementById("subMode");
+      const startBtn = document.getElementById("startBtn");
+      const setupPanel = document.getElementById("setupPanel");
+      const quizPanel = document.getElementById("quizPanel");
+      const progressText = document.getElementById("progressText");
+      const scoreText = document.getElementById("scoreText");
+      const questionText = document.getElementById("questionText");
+      const answerArea = document.getElementById("answerArea");
+      const feedbackMessage = document.getElementById("feedbackMessage");
+      const submitBtn = document.getElementById("submitBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const resultBox = document.getElementById("resultBox");
+
+      let state = {
+        mainMode: "fractionToPercentage",
+        subMode: "unit",
+        questions: [],
+        currentIndex: 0,
+        score: 0,
+        finished: false,
+        isLocked: false,
+        autoNextTimerId: null
+      };
+
+      startBtn.addEventListener("click", startQuiz);
+      submitBtn.addEventListener("click", handleSubmit);
+      restartBtn.addEventListener("click", resetToSetup);
+      quizPanel.addEventListener("keydown", handleQuizEnterKey);
+
+      function startQuiz() {
+        state.mainMode = mainModeEl.value;
+        state.subMode = subModeEl.value;
+        state.questions = generateQuestions(QUESTION_COUNT, state.mainMode, state.subMode);
+        state.currentIndex = 0;
+        state.score = 0;
+        state.finished = false;
+        state.isLocked = false;
+        clearAutoNextTimer();
+
+        setupPanel.classList.add("hidden");
+        quizPanel.classList.remove("hidden");
+        restartBtn.classList.add("hidden");
+        resultBox.classList.add("hidden");
+        submitBtn.classList.remove("hidden");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit";
+
+        renderCurrentQuestion();
+      }
+
+      function resetToSetup() {
+        clearAutoNextTimer();
+        quizPanel.classList.add("hidden");
+        setupPanel.classList.remove("hidden");
+      }
+
+      function generateQuestions(count, mainMode, subMode) {
+        const questions = [];
+        for (let i = 0; i < count; i++) {
+          const frac = generateFraction(subMode);
+          const reduced = reduceFraction(frac.numerator, frac.denominator);
+          const percentNumber = round2((frac.numerator / frac.denominator) * 100);
+
+          questions.push({
+            mainMode,
+            subMode,
+            numerator: frac.numerator,
+            denominator: frac.denominator,
+            reducedNumerator: reduced.numerator,
+            reducedDenominator: reduced.denominator,
+            percentValue: percentNumber,
+            percentText: percentNumber.toFixed(2)
+          });
+        }
+        return questions;
+      }
+
+      function generateFraction(subMode) {
+        if (subMode === "unit") {
+          return { numerator: 1, denominator: randomInt(6, 20) };
+        }
+
+        const denominator = randomInt(2, 20);
+        const numerator = randomInt(1, denominator - 1);
+        return { numerator, denominator };
+      }
+
+      function renderCurrentQuestion() {
+        const q = state.questions[state.currentIndex];
+        const questionNumber = state.currentIndex + 1;
+
+        progressText.textContent = "Question " + questionNumber + " / " + QUESTION_COUNT;
+        scoreText.textContent = "Score: " + state.score;
+        feedbackMessage.textContent = "";
+        feedbackMessage.className = "feedback-message";
+
+        if (q.mainMode === "fractionToPercentage") {
+          questionText.innerHTML = "Convert " + fractionHtml(q.numerator, q.denominator) + " to percentage.";
+          renderPercentageInput();
+        } else {
+          questionText.textContent = "Convert " + q.percentText + "% to fraction.";
+          renderFractionInput();
+        }
+
+        state.isLocked = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit";
+      }
+
+      function handleQuizEnterKey(event) {
+        if (event.key !== "Enter") {
+          return;
+        }
+        if (setupPanel.classList.contains("hidden") === false) {
+          return;
+        }
+        event.preventDefault();
+        handleSubmit();
+      }
+
+      function handleSubmit() {
+        if (state.finished || state.isLocked) {
+          return;
+        }
+
+        checkCurrentAnswer();
+      }
+
+      function checkCurrentAnswer() {
+        const q = state.questions[state.currentIndex];
+        let isCorrect = false;
+
+        if (q.mainMode === "fractionToPercentage") {
+          const pctInput = document.getElementById("pctInput");
+          const userVal = parsePercent(pctInput ? pctInput.value : "");
+
+          if (userVal !== null) {
+            const roundedUser = round2(userVal);
+            isCorrect = roundedUser === q.percentValue;
+          }
+
+          if (isCorrect) {
+            state.score++;
+            feedbackMessage.textContent = "Correct";
+            feedbackMessage.className = "feedback-message feedback-ok";
+          } else {
+            feedbackMessage.textContent = q.numerator + "/" + q.denominator + " = " + q.percentText + "%";
+            feedbackMessage.className = "feedback-message feedback-bad";
+          }
+        } else {
+          const numInput = document.getElementById("numInput");
+          const denInput = document.getElementById("denInput");
+          const n = parseInteger(numInput ? numInput.value : "");
+          const d = parseInteger(denInput ? denInput.value : "");
+
+          if (n !== null && d !== null && d !== 0 && n > 0 && d > 0) {
+            const userPercent = round2((n / d) * 100);
+            isCorrect = userPercent === q.percentValue;
+          }
+
+          if (isCorrect) {
+            state.score++;
+            feedbackMessage.textContent = "Correct";
+            feedbackMessage.className = "feedback-message feedback-ok";
+          } else {
+            feedbackMessage.textContent = q.percentText + "% = " + q.reducedNumerator + "/" + q.reducedDenominator;
+            feedbackMessage.className = "feedback-message feedback-bad";
+          }
+        }
+
+        scoreText.textContent = "Score: " + state.score;
+        state.isLocked = true;
+        disableCurrentInputs(true);
+        submitBtn.disabled = true;
+
+        const nextDelayMs = isCorrect ? 800 : 1500;
+        state.autoNextTimerId = window.setTimeout(moveNext, nextDelayMs);
+      }
+
+      function moveNext() {
+        clearAutoNextTimer();
+        if (state.currentIndex >= QUESTION_COUNT - 1) {
+          finishQuiz();
+          return;
+        }
+
+        state.currentIndex++;
+        renderCurrentQuestion();
+      }
+
+      function finishQuiz() {
+        state.finished = true;
+        state.isLocked = true;
+        clearAutoNextTimer();
+        submitBtn.classList.add("hidden");
+        restartBtn.classList.remove("hidden");
+
+        const percentScore = ((state.score / QUESTION_COUNT) * 100).toFixed(2);
+        resultBox.innerHTML =
+          "<strong>Practice complete.</strong><br>" +
+          "Final score: " + state.score + " / " + QUESTION_COUNT + " (" + percentScore + "%)";
+        resultBox.classList.remove("hidden");
+      }
+
+      function renderPercentageInput() {
+        answerArea.innerHTML =
+          '<div class="percent-input-row">' +
+          '  <input id="pctInput" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g., 33.33" />' +
+          '  <span class="percent-sign">%</span>' +
+          "</div>";
+        const input = document.getElementById("pctInput");
+        if (input) {
+          input.focus();
+        }
+      }
+
+      function renderFractionInput() {
+        answerArea.innerHTML =
+          '<div class="input-wrap fraction-group">' +
+          '  <input id="numInput" class="fraction-input" type="number" step="1" inputmode="numeric" placeholder="Numerator" />' +
+          '  <div class="fraction-bar"></div>' +
+          '  <input id="denInput" class="fraction-input" type="number" step="1" inputmode="numeric" placeholder="Denominator" />' +
+          "</div>";
+        const input = document.getElementById("numInput");
+        if (input) {
+          input.focus();
+        }
+      }
+
+      function disableCurrentInputs(shouldDisable) {
+        const fields = answerArea.querySelectorAll("input");
+        fields.forEach(function (field) {
+          field.disabled = shouldDisable;
+        });
+      }
+
+      function clearAutoNextTimer() {
+        if (state.autoNextTimerId !== null) {
+          window.clearTimeout(state.autoNextTimerId);
+          state.autoNextTimerId = null;
+        }
+      }
+
+      function parsePercent(text) {
+        if (!text) {
+          return null;
+        }
+        const cleaned = String(text).replace("%", "").trim();
+        if (cleaned === "") {
+          return null;
+        }
+        const value = Number(cleaned);
+        return Number.isFinite(value) ? value : null;
+      }
+
+      function parseInteger(text) {
+        if (text === null || text === undefined) {
+          return null;
+        }
+        const trimmed = String(text).trim();
+        if (trimmed === "") {
+          return null;
+        }
+        if (!/^[-+]?\d+$/.test(trimmed)) {
+          return null;
+        }
+        return Number(trimmed);
+      }
+
+      function reduceFraction(numerator, denominator) {
+        const divisor = gcd(Math.abs(numerator), Math.abs(denominator));
+        return {
+          numerator: numerator / divisor,
+          denominator: denominator / divisor
+        };
+      }
+
+      function gcd(a, b) {
+        let x = a;
+        let y = b;
+        while (y !== 0) {
+          const t = y;
+          y = x % y;
+          x = t;
+        }
+        return x;
+      }
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function round2(value) {
+        return Math.round(value * 100) / 100;
+      }
+
+      function fractionHtml(num, den) {
+        return (
+          '<span class="fraction-display">' +
+          '  <span>' + num + '</span>' +
+          '  <span class="bar"></span>' +
+          '  <span>' + den + '</span>' +
+          "</span>"
+        );
+      }
+    })();
+  </script>
+</body>
+</html>
