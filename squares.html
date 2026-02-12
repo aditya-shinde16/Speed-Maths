@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Squares, Roots, Cubes Practice</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1b1f24;
+      --muted: #586274;
+      --line: #d8deea;
+      --accent: #1f6feb;
+      --ok: #1a7f37;
+      --bad: #cf222e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #f8faff 0%, #f2f5fb 100%);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 840px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(10, 20, 40, 0.06);
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(1.2rem, 2.3vw, 1.6rem);
+      letter-spacing: 0.2px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .setup-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus {
+      outline: 2px solid rgba(31, 111, 235, 0.18);
+      outline-offset: 1px;
+    }
+
+    .primary-btn {
+      border: 1px solid #1558c0;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .primary-btn:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    .meta {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .quiz-panels {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+      min-height: 132px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .question {
+      font-size: clamp(1.25rem, 3vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-align: left;
+      margin-bottom: 12px;
+    }
+
+    .feedback {
+      min-height: 100%;
+      text-align: left;
+      font-size: clamp(1.15rem, 2.8vw, 1.55rem);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+    }
+
+    .feedback:empty::before {
+      content: "Waiting for answer";
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .feedback.correct {
+      color: var(--ok);
+    }
+
+    .feedback.wrong {
+      color: var(--bad);
+    }
+
+    .answer-form {
+      margin-top: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .answer-form input {
+      flex: 1;
+    }
+
+    .answer-form button {
+      width: 130px;
+      flex-shrink: 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 16px;
+      }
+
+      .quiz-panels {
+        grid-template-columns: 1fr;
+      }
+
+      .answer-form {
+        flex-direction: column;
+      }
+
+      .answer-form button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Squares, Square Roots, and Cubes Practice</h1>
+
+    <section id="setupScreen">
+      <div class="setup-grid">
+        <div>
+          <label for="modeSelect">Mode</label>
+          <select id="modeSelect">
+            <option value="squares">Squares</option>
+            <option value="roots">Square Roots</option>
+            <option value="cubes">Cubes</option>
+          </select>
+        </div>
+
+        <div id="squaresSubModeWrap">
+          <label for="squaresSubMode">Squares Sub-Mode</label>
+          <select id="squaresSubMode">
+            <option value="11-40">11 to 40</option>
+            <option value="41-60">41 to 60</option>
+            <option value="11-60">11 to 60</option>
+          </select>
+        </div>
+
+        <p class="muted">Questions: 100 (fixed)</p>
+        <button id="startBtn" class="primary-btn">Start</button>
+      </div>
+    </section>
+
+    <section id="quizScreen" class="hidden">
+      <div class="meta">
+        <div id="progressText">Question 1 / 100</div>
+        <div id="scoreText">Score: 0</div>
+      </div>
+
+      <div class="quiz-panels">
+        <div class="panel">
+          <div id="questionText" class="question"></div>
+          <form id="answerForm" class="answer-form" autocomplete="off">
+            <input id="answerInput" type="text" inputmode="numeric" placeholder="Type answer">
+            <button id="submitBtn" type="submit" class="primary-btn">Submit</button>
+          </form>
+        </div>
+        <div class="panel">
+          <div id="feedbackText" class="feedback"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const QUESTION_COUNT = 100;
+      const CORRECT_DELAY_MS = 800;
+      const WRONG_DELAY_MS = 1500;
+
+      const setupScreen = document.getElementById("setupScreen");
+      const quizScreen = document.getElementById("quizScreen");
+      const modeSelect = document.getElementById("modeSelect");
+      const squaresSubModeWrap = document.getElementById("squaresSubModeWrap");
+      const squaresSubMode = document.getElementById("squaresSubMode");
+      const startBtn = document.getElementById("startBtn");
+
+      const progressText = document.getElementById("progressText");
+      const scoreText = document.getElementById("scoreText");
+      const questionText = document.getElementById("questionText");
+      const feedbackText = document.getElementById("feedbackText");
+      const answerForm = document.getElementById("answerForm");
+      const answerInput = document.getElementById("answerInput");
+      const submitBtn = document.getElementById("submitBtn");
+
+      let questions = [];
+      let currentIndex = 0;
+      let score = 0;
+      let awaitingNext = false;
+
+      function randomInt(maxExclusive) {
+        return Math.floor(Math.random() * maxExclusive);
+      }
+
+      function shuffleArray(items) {
+        const arr = items.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = randomInt(i + 1);
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function generateSequence(min, max, count) {
+        const pool = [];
+        for (let n = min; n <= max; n++) {
+          pool.push(n);
+        }
+
+        const result = [];
+        while (result.length < count) {
+          const cycle = shuffleArray(pool);
+          if (result.length > 0 && cycle.length > 1 && cycle[0] === result[result.length - 1]) {
+            cycle.push(cycle.shift());
+          }
+          result.push(...cycle);
+        }
+        return result.slice(0, count);
+      }
+
+      function buildQuestions(mode, subMode) {
+        let min = 0;
+        let max = 0;
+
+        if (mode === "squares") {
+          if (subMode === "11-40") {
+            min = 11;
+            max = 40;
+          } else if (subMode === "41-60") {
+            min = 41;
+            max = 60;
+          } else {
+            min = 11;
+            max = 60;
+          }
+        } else if (mode === "roots") {
+          min = 31;
+          max = 99;
+        } else {
+          min = 2;
+          max = 20;
+        }
+
+        const numbers = generateSequence(min, max, QUESTION_COUNT);
+        return numbers.map((n) => {
+          if (mode === "squares") {
+            return {
+              prompt: n + "\u00B2 ?",
+              answer: n * n
+            };
+          }
+          if (mode === "roots") {
+            return {
+              prompt: "\u221A(" + (n * n) + ") = ?",
+              answer: n
+            };
+          }
+          return {
+            prompt: n + "\u00B3 ?",
+            answer: n * n * n
+          };
+        });
+      }
+
+      function updateModeUI() {
+        squaresSubModeWrap.classList.toggle("hidden", modeSelect.value !== "squares");
+      }
+
+      function renderCurrentQuestion() {
+        const q = questions[currentIndex];
+        progressText.textContent = "Question " + (currentIndex + 1) + " / " + QUESTION_COUNT;
+        scoreText.textContent = "Score: " + score;
+        questionText.textContent = q.prompt;
+        feedbackText.textContent = "";
+        feedbackText.className = "feedback";
+        answerInput.value = "";
+        answerInput.disabled = false;
+        submitBtn.disabled = false;
+        answerInput.focus();
+      }
+
+      function finishQuiz() {
+        questionText.textContent = "Completed";
+        feedbackText.textContent = "Final score: " + score + " / " + QUESTION_COUNT;
+        feedbackText.className = "feedback";
+        answerInput.value = "";
+        answerInput.disabled = true;
+        submitBtn.disabled = true;
+        progressText.textContent = "Question " + QUESTION_COUNT + " / " + QUESTION_COUNT;
+        scoreText.textContent = "Score: " + score;
+      }
+
+      function moveToNext() {
+        currentIndex += 1;
+        awaitingNext = false;
+        if (currentIndex >= questions.length) {
+          finishQuiz();
+          return;
+        }
+        renderCurrentQuestion();
+      }
+
+      function handleSubmit(event) {
+        event.preventDefault();
+        if (awaitingNext || currentIndex >= questions.length) {
+          return;
+        }
+
+        const raw = answerInput.value.trim();
+        if (raw === "") {
+          answerInput.focus();
+          return;
+        }
+
+        const userAnswer = Number(raw);
+        const current = questions[currentIndex];
+        const isCorrect = Number.isFinite(userAnswer) && userAnswer === current.answer;
+        awaitingNext = true;
+        answerInput.disabled = true;
+        submitBtn.disabled = true;
+
+        if (isCorrect) {
+          score += 1;
+          scoreText.textContent = "Score: " + score;
+          feedbackText.textContent = "Correct";
+          feedbackText.className = "feedback correct";
+          setTimeout(moveToNext, CORRECT_DELAY_MS);
+        } else {
+          feedbackText.textContent = "Wrong. Correct answer: " + current.answer;
+          feedbackText.className = "feedback wrong";
+          setTimeout(moveToNext, WRONG_DELAY_MS);
+        }
+      }
+
+      function startQuiz() {
+        const mode = modeSelect.value;
+        const subMode = squaresSubMode.value;
+        questions = buildQuestions(mode, subMode);
+        currentIndex = 0;
+        score = 0;
+        awaitingNext = false;
+
+        setupScreen.classList.add("hidden");
+        quizScreen.classList.remove("hidden");
+        renderCurrentQuestion();
+      }
+
+      modeSelect.addEventListener("change", updateModeUI);
+      startBtn.addEventListener("click", startQuiz);
+      answerForm.addEventListener("submit", handleSubmit);
+
+      updateModeUI();
+    })();
+  </script>
+</body>
+</html>
