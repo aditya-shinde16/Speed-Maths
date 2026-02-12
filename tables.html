@@ -188,7 +188,7 @@
       <div class="field">
         <label for="rangeSelect">Select multiplier range</label>
         <select id="rangeSelect" aria-label="Select range">
-          <option value="2-10">2-9</option>
+          <option value="2-9">2-9</option>
           <option value="11-20">11-20</option>
           <option value="2-20">2-20</option>
         </select>
@@ -222,6 +222,8 @@
   <script>
     (function () {
       const QUESTION_COUNT = 100;
+      const PHASE_ONE_COUNT = 60;
+      const PHASE_TWO_COUNT = QUESTION_COUNT - PHASE_ONE_COUNT;
 
       const setupEl = document.getElementById("setup");
       const quizEl = document.getElementById("quiz");
@@ -240,6 +242,10 @@
       let currentIndex = 0;
       let score = 0;
       let waiting = false;
+      let selectedBase = 1;
+      let selectedMultipliers = [];
+      let phaseOneWrongCounts = {};
+      let phaseTwoPrepared = false;
 
       function buildBaseNumberOptions() {
         for (let i = 1; i <= 30; i += 1) {
@@ -255,16 +261,78 @@
         return { start, end };
       }
 
-      function randomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+      function buildRangeValues(rangeText) {
+        const { start, end } = parseRange(rangeText);
+        const values = [];
+        for (let value = start; value <= end; value += 1) {
+          values.push(value);
+        }
+        return values;
       }
 
-      function generateQuestions(base, rangeText) {
-        const { start, end } = parseRange(rangeText);
+      function createWrongCountMap(multipliers) {
+        const map = {};
+        for (let i = 0; i < multipliers.length; i += 1) {
+          map[multipliers[i]] = 0;
+        }
+        return map;
+      }
+
+      function shuffleArray(items) {
+        for (let i = items.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const temp = items[i];
+          items[i] = items[j];
+          items[j] = temp;
+        }
+        return items;
+      }
+
+      function generateCycleQuestions(base, multipliers, questionCount) {
         const result = [];
 
-        for (let i = 0; i < QUESTION_COUNT; i += 1) {
-          const multiplier = randomInt(start, end);
+        while (result.length < questionCount) {
+          const cycle = shuffleArray(multipliers.slice());
+
+          for (let i = 0; i < cycle.length && result.length < questionCount; i += 1) {
+            const multiplier = cycle[i];
+            result.push({
+              base,
+              multiplier,
+              answer: base * multiplier
+            });
+          }
+        }
+
+        return result;
+      }
+
+      function pickWeightedMultiplier(multipliers, wrongCounts) {
+        let totalWeight = 0;
+
+        for (let i = 0; i < multipliers.length; i += 1) {
+          const multiplier = multipliers[i];
+          totalWeight += 1 + (wrongCounts[multiplier] || 0);
+        }
+
+        let roll = Math.random() * totalWeight;
+
+        for (let i = 0; i < multipliers.length; i += 1) {
+          const multiplier = multipliers[i];
+          roll -= 1 + (wrongCounts[multiplier] || 0);
+          if (roll < 0) {
+            return multiplier;
+          }
+        }
+
+        return multipliers[multipliers.length - 1];
+      }
+
+      function generateBiasedQuestions(base, multipliers, wrongCounts, questionCount) {
+        const result = [];
+
+        for (let i = 0; i < questionCount; i += 1) {
+          const multiplier = pickWeightedMultiplier(multipliers, wrongCounts);
           result.push({
             base,
             multiplier,
@@ -314,15 +382,30 @@
 
         const q = questions[currentIndex];
         const isCorrect = userValue === q.answer;
+        const isPhaseOneQuestion = currentIndex < PHASE_ONE_COUNT;
 
         if (isCorrect) {
           score += 1;
           showFeedback("Correct", true);
         } else {
+          if (isPhaseOneQuestion) {
+            phaseOneWrongCounts[q.multiplier] += 1;
+          }
           showFeedback(
             `${q.base} \u00D7 ${q.multiplier} = ${q.answer}`,
             false
           );
+        }
+
+        if (!phaseTwoPrepared && currentIndex === PHASE_ONE_COUNT - 1) {
+          const phaseTwoQuestions = generateBiasedQuestions(
+            selectedBase,
+            selectedMultipliers,
+            phaseOneWrongCounts,
+            PHASE_TWO_COUNT
+          );
+          questions = questions.concat(phaseTwoQuestions);
+          phaseTwoPrepared = true;
         }
 
         waiting = true;
@@ -347,10 +430,14 @@
       }
 
       function startQuiz() {
-        const base = Number(baseNumberEl.value);
+        selectedBase = Number(baseNumberEl.value);
         const range = rangeSelectEl.value;
 
-        questions = generateQuestions(base, range);
+        selectedMultipliers = buildRangeValues(range);
+        phaseOneWrongCounts = createWrongCountMap(selectedMultipliers);
+        phaseTwoPrepared = false;
+
+        questions = generateCycleQuestions(selectedBase, selectedMultipliers, PHASE_ONE_COUNT);
         currentIndex = 0;
         score = 0;
         waiting = false;
